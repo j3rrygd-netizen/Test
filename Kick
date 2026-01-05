@@ -1,0 +1,101 @@
+-- StarterPlayerScripts > LocalScript
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local TextChatService = game:GetService("TextChatService")
+
+local player = Players.LocalPlayer
+local autoKick = false
+
+-- === GUI ===
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Parent = gui
+frame.Size = UDim2.fromScale(0.35, 0.25) -- 👈 größer
+frame.Position = UDim2.fromScale(0.325, 0.38)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Active = true
+
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 22)
+
+-- Titel
+local title = Instance.new("TextLabel")
+title.Parent = frame
+title.Size = UDim2.fromScale(1, 0.3)
+title.BackgroundTransparency = 1
+title.Text = "Auto Kick Victim"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+
+-- Toggle Button
+local toggle = Instance.new("TextButton")
+toggle.Parent = frame
+toggle.Size = UDim2.fromScale(0.75, 0.35)
+toggle.Position = UDim2.fromScale(0.125, 0.5)
+toggle.Text = "OFF"
+toggle.Font = Enum.Font.GothamBold
+toggle.TextScaled = true
+toggle.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
+toggle.TextColor3 = Color3.new(1, 1, 1)
+
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 18)
+
+-- === TOGGLE ===
+toggle.MouseButton1Click:Connect(function()
+	autoKick = not autoKick
+	if autoKick then
+		toggle.Text = "ON"
+		toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+	else
+		toggle.Text = "OFF"
+		toggle.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
+	end
+end)
+
+-- === DRAG (PC + MOBILE) ===
+local dragging = false
+local dragStart
+local startPos
+
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+	or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+-- === PROXIMITY PROMPT ===
+ProximityPromptService.PromptTriggered:Connect(function(prompt, plr)
+	if plr == player and autoKick then
+		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+			TextChatService.TextChannels.RBXGeneral:SendAsync("67")
+		end
+	end
+end)
